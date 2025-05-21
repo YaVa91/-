@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Крупнейшие нефтегазовые месторождения России</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+    }
+    #map {
+      width: 100%;
+      height: 100vh;
+      background-color: #e0e0e0;
+    }
+    .oil-popup {
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 300px;
+    }
+    .oil-popup b {
+      color: #e74c3c;
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+    .oil-popup ul {
+      padding-left: 20px;
+      margin: 8px 0;
+    }
+    .oil-popup li {
+      margin-bottom: 4px;
+    }
+    .map-title {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="map-title">Крупнейшие нефтегазовые месторождения России</div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  
+  <script>
+    // Функция для перевода градусов/минут/секунд в десятичные градусы
+    function dmsToDecimal(degrees, minutes, seconds, direction) {
+      let decimal = degrees + (minutes / 60) + (seconds / 3600);
+      if (direction === 'S' || direction === 'W') {
+        decimal = -decimal;
+      }
+      return decimal;
+    }
+
+    // Координаты месторождений (переведенные в десятичный формат)
+    const deposits = [
+      {
+        name: "Приразломное месторождение",
+        coords: [69 + 15/60 + 7/3600, 57 + 20/60 + 34/3600], // 69°15′07″ с.ш., 57°20′34″ в.д.
+        description: `
+          <div class="oil-popup">
+            <b>Приразломное месторождение (Печорское море, Арктика)</b>
+            <ul>
+              <li>Запасы: 300 млн баррелей</li>
+              <li>Сложность бурения: 5 (экстремальные температуры, льды)</li>
+              <li>Экологические риски: 5 (риск разливов в холодной воде)</li>
+              <li>Стоимость: 80 тыс. мгр</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        name: "Ванкорское",
+        coords: [67 + 48/60 + 29/3600, 83 + 32/60 + 50/3600], // 67°48′29″ с.ш., 83°32′50″ в.д.
+        description: `
+          <div class="oil-popup">
+            <b>Ванкорское месторождение (Красноярский край)</b>
+            <ul>
+              <li>Запасы: 500 млн баррелей</li>
+              <li>Сложность бурения: 3 (вечная мерзлота, удалённость)</li>
+              <li>Экологические риски: 4 (риск причинения вреда тундре)</li>
+              <li>Стоимость: 120 тыс. мгр</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        name: "Самотлорское",
+        coords: [61 + 7/60, 76 + 45/60], // 61°07′00″ с.ш., 76°45′00″ в.д.
+        description: `
+          <div class="oil-popup">
+            <b>Самотлорское месторождение (ХМАО)</b>
+            <ul>
+              <li>Запасы: 700 млн баррелей</li>
+              <li>Сложность бурения: 2 (высокий уровень обводнённости)</li>
+              <li>Экологические риски: 3 (загрязнение грунтовых вод)</li>
+              <li>Стоимость: 150 тыс. мгр</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        name: "Ромашкинское месторождение",
+        coords: [54 + 34/60 + 22/3600, 52 + 22/60 + 14/3600], // 54°34′22″ с.ш., 52°22′14″ в.д.
+        description: `
+          <div class="oil-popup">
+            <b>Ромашкинское месторождение (Татарстан)</b>
+            <ul>
+              <li>Запасы: 400 млн баррелей</li>
+              <li>Сложность бурения: 1 (лёгкая добыча, тяжёлая нефть)</li>
+              <li>Экологические риски: 2 (требуется глубокая переработка)</li>
+              <li>Стоимость: 90 тыс. мгр</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        name: "Штокмановское месторождение",
+        coords: [73 + 0/60 + 26/3600, 44 + 0/60 + 19/3600], // 73°00′26″ с.ш., 44°00′19″ в.д.
+        description: `
+          <div class="oil-popup">
+            <b>Штокмановское месторождение (Баренцево море, офшор)</b>
+            <ul>
+              <li>Запасы: 600 млн баррелей</li>
+              <li>Сложность бурения: 4 (глубоководность, штормы)</li>
+              <li>Экологические риски: 4 (риск аварий в открытом море)</li>
+              <li>Стоимость: 130 тыс. мгр</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        name: "Уренгойское месторождение",
+        coords: [66 + 6/60, 76 + 54/60], // 66°06′ с.ш., 76°54′ в.д.
+        description: `
+          <div class="oil-popup">
+            <b>Уренгойское месторождение (ЯНАО)</b>
+            <ul>
+              <li>Запасы: 450 млн баррелей</li>
+              <li>Сложность бурения: 3 (метановые газовые шапки)</li>
+              <li>Экологические риски: 3 (риск выбросов сероводорода)</li>
+              <li>Стоимость: 100 тыс. мгр</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        name: "Туймазинское месторождение",
+        coords: [54 + 33/60 + 6/3600, 53 + 30/60 + 1/3600], // 54°33′06″ с.ш., 53°30′01″ в.д.
+        description: `
+          <div class="oil-popup">
+            <b>Туймазинское месторождение (Башкортостан)</b>
+            <ul>
+              <li>Запасы: 300 млн баррелей</li>
+              <li>Сложность бурения: 2 (глубина до 2 км)</li>
+              <li>Экологические риски: 3 (риск прорыва пластовых вод)</li>
+              <li>Стоимость: 80 тыс. мгр</li>
+            </ul>
+          </div>
+        `
+      }
+    ];
+
+    // Инициализация карты с центром на России
+    const map = L.map('map').setView([62, 94], 3);
+
+    // Добавление фонового изображения карты России
+    // Укажите правильные границы изображения (северная, западная, южная, восточная границы)
+    const imageBounds = [[40, 30], [80, 180]]; // Примерные координаты границ России
+    L.imageOverlay('russia-map.png', imageBounds).addTo(map);
+
+    // Установка границ карты, чтобы нельзя было уйти за пределы России
+    map.setMaxBounds(imageBounds);
+
+    // Создание кастомной иконки из локального файла
+    const oilIcon = L.icon({
+      iconUrl: 'oil-icon.png',
+      iconSize: [32, 32], // размер иконки
+      iconAnchor: [16, 32], // точка привязки
+      popupAnchor: [0, -32] // положение popup относительно иконки
+    });
+
+    // Добавление меток на карту
+    deposits.forEach(deposit => {
+      L.marker(deposit.coords, { icon: oilIcon })
+        .addTo(map)
+        .bindPopup(deposit.description);
+    });
+
+    // Добавление контроля масштаба
+    L.control.scale().addTo(map);
+  </script>
+</body>
+</html>
